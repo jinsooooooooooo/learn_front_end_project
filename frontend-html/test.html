@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Query Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    textarea, input { width: 100%; margin: 10px 0; padding: 10px; font-size: 1rem; }
+    button { padding: 10px 20px; font-size: 1rem; }
+    .response { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>💬 RAG Query Demo Play Ground</h1>
+
+  <textarea id="queryInput" rows="4" placeholder="질문을 입력하세요..."></textarea>
+  <button onclick="sendQuery()">질의하기</button>
+
+  <div class="response" id="responseArea">응답이 여기에 표시됩니다.</div>
+
+  <script>
+    async function sendQuery() {
+      const query = document.getElementById("queryInput").value;
+      const responseDiv = document.getElementById("responseArea");
+
+      responseDiv.textContent = "⏳ 질의 중...";
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ "message": query }),
+        });
+
+        if (!res.ok) throw new Error("서버 오류 발생: " + res.status);
+
+        const data = await res.json();
+        responseDiv.textContent = data.reply || "응답이 없습니다.";
+      } catch (err) {
+        responseDiv.textContent = "❌ 오류: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>

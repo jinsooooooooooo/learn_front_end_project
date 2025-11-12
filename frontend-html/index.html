@@ -1,0 +1,83 @@
+<!-- frontend-html\index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent LLM Workbench</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">AI CHAT PROFESSIONAL</div>
+            <nav class="agent-menu">
+                <h3>Agent 모드 선택</h3>
+                <ul id="agent-list">
+                    </ul>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="avatar">임</div>
+                <div class="user-info">
+                    <strong id="user-name">jinsoo</strong><br>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <header>
+                <h1>Your Smart Agent AI</h1>
+                <h2>다양한 에이전트를 실시간으로 테스트하세요</h2>
+            </header>
+            
+            <div class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <p class="greeting">
+                        현재 선택된 에이전트: <strong id="current-agent-name">채팅</strong>
+                        <br>
+                        대화를 시작하거나, 좌측에서 다른 에이전트 모드를 선택해주세요.
+                    </p>
+                    
+                    <div class="recommendation-cards">
+                        <h4>이런 대화를 많이 했어요</h4>
+                        <div class="card-grid">
+                            <div class="card">추천</div>
+                            <div class="card">추천</div>
+                            <div class="card">추천</div>
+                            <div class="card">추천</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ 키워드 입력 영역 구조 변경 -->
+                <div id="keyword-input-area" class="keyword-input-area">
+                    <h3>키워드 입력 (최대 3개)</h3>
+                    <div class="keyword-card-grid"> <!-- 새로운 그리드 컨테이너 -->
+                        <div class="keyword-card">
+                            <label for="keyword1">키워드 1:</label>
+                            <input type="text" id="keyword1" class="keyword-input" placeholder="필수 키워드">
+                        </div>
+                        <div class="keyword-card">
+                            <label for="keyword2">키워드 2:</label>
+                            <input type="text" id="keyword2" class="keyword-input" placeholder="선택 키워드">
+                        </div>
+                        <div class="keyword-card">
+                            <label for="keyword3">키워드 3:</label>
+                            <input type="text" id="keyword3" class="keyword-input" placeholder="선택 키워드">
+                        </div>
+                    </div>
+                </div>
+                <!-- --------------------------------- -->
+
+                <div class="input-area">
+                    <input type="text" id="user-input" placeholder="필요한 에이전트 작업 요청을 입력하고 엔터를 누르세요...">
+                    <button id="send-btn">↑</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
