@@ -1,181 +1,341 @@
 // frontend-react/src/App.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Header from './components/Header';
-import Counter from './components/Counter';
-import Timer from './components/Timer';
+import React, { useState, useEffect, useRef } from 'react'; // ✅ useCallback 제거 (단순화)
 import useChatStream from './hooks/useChatStream'; // ✅ 커스텀 Hook import
-import './App.css';
+import './App.css'; // Global.css를 사용한다고 가정 (App.css는 비워둠)
+
+
+// 헬퍼 함수 정의 (컴포넌트 바깥에서 선언)
+// 뉴스 응답 HTML을 생성하는 함수 (DOM 조작 대신 HTML 문자열 반환)
+function createNewsHtml(data) {
+  if (!data.articles || data.articles.length === 0) {
+    return `검색된 뉴스 기사가 없습니다.`;
+  }
+
+  let newsHtml = `
+      <div class="news-container">
+          <ul class="news-list">
+  `;
+
+  data.articles.forEach(article => {
+      newsHtml += `
+          <li class="news-item">
+              <a href="${article.link}" target="_blank" rel="noopener noreferrer" class="news-title-link">${article.title}</a>
+              <p class="news-description">${article.description}</p>
+          </li>
+      `;
+  });
+
+  newsHtml += `
+          </ul>
+      </div>
+  `;
+  return newsHtml;
+}
+
+// 일반 텍스트 응답을 반환하는 함수
+function createChatText(data) {
+  return data.reply || data.response || "응답이 없습니다.";
+}
+
 
 function App() {
-  const appTitle = "React 핵심 개념 학습";
-  const [showTimer, setShowTimer] = useState(false);
-  
-  const [chatMessage, setChatMessage] = useState(''); // ✅ 채팅 입력 메시지 상태
- 
-  // useChatStream Hook 사용: startStreamAction 함수를 받아옵니다.
-  const { streamData, isStreaming, error, startStreamAction } = useChatStream(
-    'http://localhost:8000/api/stream', // 스트리밍 API URL
-    'testUser', // 사용자 ID (임시)
-    [], // keywords는 현재 예제에선 필요 없으므로 빈 배열
+  // 1. 상태 정의
+  const [agents, setAgents] = useState([
+    { name: '채팅', apiPath: '/api/chat', mode: 'Chat', messages: [] },
+    { name: '회의실', apiPath: '/api/meeting', mode: 'Chat', messages: [] },
+    { name: '네이버뉴스', apiPath: '/api/naver_news', mode: 'Chat', messages: [] },
+    { name: '뉴스큐레이션', apiPath: '/api/news', mode: 'Chat', messages: [] },
+    { name: 'Langchain채팅', apiPath: '/api/langchain/chat', mode: 'Chat', messages: [] },
+    { name: 'StreamResponse', apiPath: '/api/stream', mode: 'Stream', messages: [] }
+  ]);
+  const [activeAgent, setActiveAgent] = useState(agents[0]); // 현재 활성 에이전트
+  const [userId, setUserId] = useState("jinsoo"); 
+
+  const [chatMessageInput, setChatMessageInput] = useState(''); // 입력 필드 메시지 상태
+  const [keywordInputs, setKeywordInputs] = useState(['', '', '']); // 키워드 입력 필드 상태
+  const [messages, setMessages] = useState([]); // ✅ 현재 채팅 화면에 표시될 메시지 목록
+  const [streamTriggerMessage, setStreamTriggerMessage] = useState(''); // ✅ useChatStream Hook을 트리거할 메시지 상태
+
+
+  // 2. useChatStream Hook (StreamResponse 에이전트용)
+  const { 
+    streamData, 
+    isStreaming, 
+    error: streamError,
+    startStreamAction // ✅ 스트림 시작 함수를 받아옴
+  } = useChatStream(
+    'http://localhost:8000/api/stream', 
+    userId, 
+    keywordInputs.filter(kw => kw.trim() !== '') // 키워드는 전달할 수 있음
   );
 
-  useEffect(() => {
-    document.title = `${appTitle} | ${showTimer ? '타이머 실행 중' : '타이머 숨김'} ${isStreaming ? '| 스트리밍 중...' : ''}`;
-  }, [appTitle, showTimer, isStreaming]);
 
-  // 스트리밍 데이터 수신 변경 감지 
+  // 3. UI 업데이트를 위한 useEffect
+  const messagesEndRef = useRef(null); // 메시지 목록 맨 아래를 참조 (스크롤용)
+
   useEffect(() => {
-    if (streamData) {
-      console.log('스트리밍 데이터 수신 (App.jsx):', streamData);
+    // 문서 제목 업데이트 (isStreaming 상태 반영)
+    document.title = `Multi-Agent | ${activeAgent.name} ${isStreaming ? '| 스트리밍 중...' : ''}`;
+  }, [activeAgent.name, isStreaming]);
+
+  // ✅ 스트리밍 데이터 수신 시 메시지 상태 업데이트
+  useEffect(() => {
+    if (activeAgent.name === 'StreamResponse' && isStreaming && streamData) {
+      setMessages(prevMessages => {
+        // 마지막 메시지가 현재 스트리밍 중인 메시지이면 업데이트
+        const lastMessage = prevMessages[prevMessages.length - 1];
+        if (lastMessage && lastMessage.type === 'agent' && lastMessage.isStreaming) {
+          return prevMessages.map((msg, index) => 
+            index === prevMessages.length - 1 
+              ? { ...msg, content: streamData } 
+              : msg
+          );
+        } else {
+          // 스트림 시작 시 새로운 메시지 추가
+          return [...prevMessages, { type: 'agent', contentType: 'text', content: streamData, isStreaming: true }];
+        }
+      });
+    } else if (activeAgent.name === 'StreamResponse' && !isStreaming && streamData && messages.some(msg => msg.isStreaming)) {
+        // 스트림 완료 후 최종 데이터로 업데이트 및 isStreaming 플래그 제거
+        setMessages(prevMessages => prevMessages.map((msg, index) =>
+          index === prevMessages.length - 1 && msg.isStreaming
+            ? { ...msg, content: streamData, isStreaming: false }
+            : msg
+        ));
     }
-  }, [streamData]);
+  }, [streamData, isStreaming, activeAgent.name, messages]);
 
-  // error 변경 감지 
+  // ✅ 에러 발생 시 메시지 상태 업데이트
   useEffect(() => {
-    if (error) {
-      console.error('스트리밍 오류 (App.jsx):', error);
+    if (activeAgent.name === 'StreamResponse' && streamError) {
+      setMessages(prevMessages => [...prevMessages, { type: 'agent', contentType: 'text', content: `❌ 스트리밍 오류: ${streamError.message}` }]);
     }
-  }, [error]);
+  }, [streamError, activeAgent.name]);
 
-  // 메시지 전송 핸들러: startStreamAction 함수를 직접 호출합니다.
-  const handleSendMessage = () => {
-    if (chatMessage.trim() === '') return;
-    // 실제 앱에서는 여기서 채팅 메시지를 UI에 먼저 추가하고 스트림 호출, 스트림이 완료되면 답변을 업데이트
-    console.log(`메시지 전송 요청: ${chatMessage}`);
-    startStreamAction(chatMessage); //  useChatStream에서 받은 함수를 직접 호출
-    //setChatMessage(''); // 입력창 초기화
+
+  // ✅ 스크롤을 맨 아래로 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, streamData]); // 메시지나 스트림 데이터가 변경될 때마다 스크롤
+
+
+  // 4. 이벤트 핸들러 정의
+  const handleSendMessage = async () => {
+    if (chatMessageInput.trim() === '') return;
+    
+    // 스트림이 이미 진행 중이면 새 요청 방지
+    if (isStreaming) {
+      console.warn("App.jsx: 이미 스트리밍 중이므로 새 메시지 전송을 막습니다.");
+      return;
+    }
+
+    // 사용자 메시지 히스토리 기록
+    const newUserMessage = { type: 'user', contentType: 'text', content: chatMessageInput };
+    setMessages(prevMessages => [...prevMessages, newUserMessage]);
+    
+    // 키워드 입력 필드 초기화
+    const currentKeywords = keywordInputs.filter(kw => kw.trim() !== '');
+    
+    // 입력창 초기화 (UX)
+    const messageToSend = chatMessageInput; // 상태 업데이트 전에 값 저장
+    setChatMessageInput('');
+    setKeywordInputs(['', '', '']);
+    
+
+    console.log(`[${activeAgent.name} 에이전트로 전송: ${messageToSend}`);
+    
+    // ✅ Agent 모드에 따른 API 호출 및 응답 처리
+    if (activeAgent.mode === 'Chat') {
+        // 로딩 메시지 추가
+        const loadingMessage = { type: 'agent', contentType: 'text', content: '...생각 중...', isLoading: true };
+        setMessages(prevMessages => [...prevMessages, loadingMessage]);
+
+        let fullApiPath = "http://127.0.0.1:8000" + activeAgent.apiPath;
+        
+        try {
+            const res = await fetch(fullApiPath, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "user_id": userId, "message": messageToSend, "keywords": currentKeywords }),
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 오류 발생: ${res.status} - ${errorText}`);
+            }
+
+            const data = await res.json(); 
+            console.log("Parsed JSON Data:", data);
+            
+            // 로딩 메시지 제거 및 응답 메시지로 대체
+            setMessages(prevMessages => {
+                const updatedMessages = prevMessages.filter(msg => !msg.isLoading);
+                
+                let agentResponseContent = '';
+                let agentResponseContentType = 'text';
+
+                if (activeAgent.name === '네이버뉴스' || activeAgent.name === '뉴스큐레이션') {
+                    agentResponseContent = createNewsHtml(data);
+                    agentResponseContentType = 'html';
+                } else {
+                    agentResponseContent = createChatText(data);
+                }
+                return [...updatedMessages, { type: 'agent', contentType: agentResponseContentType, content: agentResponseContent }];
+            });
+
+        } catch (err) {
+            console.error("❌ 최종 오류 발생:", err);
+            setMessages(prevMessages => {
+                const updatedMessages = prevMessages.filter(msg => !msg.isLoading);
+                return [...updatedMessages, { type: 'agent', contentType: 'text', content: `❌ 오류: ${err.message}` }];
+            });
+        }
+    } else if (activeAgent.mode === 'Stream'){
+        // 스트리밍 모드: useChatStream Hook 활용
+        //setStreamTriggerMessage(messageToSend); // ✅ Hook을 트리거할 메시지 상태 업데이트
+        startStreamAction(messageToSend); 
+    }
   };
 
-  const myEventSourceRef = useRef(null); // EventSource 객체를 저장할 ref
-  const [myStreamData, setMyStreamData] = useState('');
-  const [myIsStreaming, setMyIsStreaming] = useState(false); 
-  const [myError, setMyError] = useState(null);
+  // ✅ Agent 변경 핸들러
+  const handleAgentChange = (agent) => {
+    // 현재 활성 Agent의 메시지 기록을 agents 배열에 저장
+    setAgents(prevAgents => prevAgents.map(a => 
+      a.name === activeAgent.name ? { ...a, messages } : a
+    ));
+    // 새 Agent 선택 및 메시지 기록 로드
+    setActiveAgent(agent);
+    setMessages(agent.messages); // ✅ 선택된 에이전트의 메시지 기록을 현재 메시지 상태로 설정
+    setChatMessageInput('');
+    setKeywordInputs(['', '', '']);
+  };
 
-  // mySampleStream 전용 useEffect (cleanup 역할)
-  useEffect(() => {
-    return () => {
-      // 컴포넌트 언마운트 시 또는 이 Effect가 다시 실행되기 전에 기존 연결을 닫습니다.
-      if (myEventSourceRef.current) {
-        console.log('My Sample Stream: 컴포넌트 언마운트 시 EventSource 연결 정리.');
-        myEventSourceRef.current.close();
-        myEventSourceRef.current = null;
-      }
-    };
-  }, []); // ✅ 빈 의존성 배열: 마운트 시 한 번만 실행, 언마운트 시 정리
+  // ✅ 키워드 입력 필드 변경 핸들러
+  const handleKeywordInputChange = (index, value) => {
+    setKeywordInputs(prevKeywords => {
+      const newKeywords = [...prevKeywords];
+      newKeywords[index] = value;
+      return newKeywords;
+    });
+  };
 
-  // 스트림 버튼 샘플 재구현 해보기 
-  const mySampleStream = useCallback(() => {
-    console.log("mySampleStream 함수가 재생성되었습니다."); // ✅ 함수 재생성 확인용 로그
-    if (chatMessage.trim() === '') {
-        alert('메시지를 입력하세요.');
-        return;
-    }
-    if (myIsStreaming) {
-        console.warn('My Simple Stream: 이미 스트리밍 중입니다.');
-        return;
-    }
-    
-    setMyError(null);
-    setMyStreamData('');
-    setMyIsStreaming(true);
-
-
-    console.log(`My Sample Stream 전송 요청: ${chatMessage}`);
-    
-    const path = `http://localhost:8000/api/stream?user_id=quest&message=${encodeURIComponent(chatMessage)}`;
-                    
-    myEventSourceRef.current = new EventSource(path); // EventSource 생성 및 ref에 저장
-
-    myEventSourceRef.current.onopen = () => {
-      console.log('myUseChatStream: EventSource 연결됨.');
-    };
-
-    myEventSourceRef.current.onmessage = (event) => {
-      console.log('onmessage 수신 ')
-      const data = event.data;
-      if (data === "[DONE]") {
-        console.log('My Sample Stream: 스트리밍 완료.');
-        myEventSourceRef.current.close(); // 연결 종료
-        myEventSourceRef.current = null;  // ref 비움
-        setMyIsStreaming(false); // ✅ 스트리밍 완료 상태로 변경
-
-        // 추가적으로 스트리밍 종료 했을 때 작업이 필요하다면 여기서 진행 
-      } else {
-        console.log('My Sample Stream: Streamming Data: ', data);
-        setMyStreamData(prevData => prevData + data);
-
-      }
-    };
-
-    myEventSourceRef.current.onerror = (err) => {
-      console.error('My Sample Stream: 스트리밍 오류 발생:', err, 'readyState:', myEventSourceRef.current?.readyState);
-      setMyError(err);
-      if (myEventSourceRef.current) {
-        myEventSourceRef.current.close();
-        myEventSourceRef.current = null;
-      }
-      setMyIsStreaming(false); // ✅ 오류 발생 시 스트리밍 완료 상태로 변경
-    };
-
-  }, [chatMessage ]);
-
+  // 5. JSX 렌더링
   return (
     <div className="app-container">
-      <Header message={appTitle} /> 
-      
-      <section className="main-content">
-        <p>아래 카운터는 자체적으로 상태를 관리합니다.</p>
-        <Counter /> 
-
-        <div style={{ marginTop: '30px', textAlign: 'center' }}>
-          <button onClick={() => setShowTimer(!showTimer)}>
-            {showTimer ? '타이머 숨기기' : '타이머 보이기'}
-          </button>
-        </div>
-
-        {showTimer && <Timer />} 
-
-        <div className="streaming-test-area">
-            <h2>스트리밍 테스트</h2>
-            <div className="streaming-test-input-group">
-                <input
-                    type="text"
-                    value={chatMessage}
-                    onChange={(e) => {
-                        setChatMessage(e.target.value);
-                    }}
-                    placeholder="스트리밍 메시지 입력"
-                />
-                <button onClick={handleSendMessage} disabled={isStreaming || chatMessage.trim() === ''}>
-                    {isStreaming ? '스트리밍 중...' : '메시지 전송'}
-                </button>
+        <aside className="sidebar">
+            <div className="logo">AI CHAT PROFESSIONAL</div>
+            <nav className="agent-menu">
+                <h3>Agent 모드 선택</h3>
+                <ul id="agent-list">
+                    {agents.map((agent, index) => (
+                        <li 
+                            key={index} 
+                            className={`agent-item ${agent.name === activeAgent.name ? 'active' : ''}`}
+                            onClick={() => handleAgentChange(agent)} 
+                        >
+                            <span style={{color: '#6c7081', fontWeight: 500, marginRight: '5px'}}>{agent.mode}</span>
+                            {agent.name}
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+            
+            <div className="user-profile">
+                <div className="avatar">임</div>
+                <div className="user-info">
+                    <strong>{userId}</strong><br/>
+                </div>
             </div>
-            {streamData && (
-                <p>
-                    수신된 스트림: <strong>{streamData}</strong>
-                </p>
-            )}
-            {error && <p className="error-message">에러 발생: {error.message}</p>}
-        </div>
+        </aside>
 
-        <div style={{ marginTop: '30px', textAlign: 'center' }}>
-          <button onClick={mySampleStream} disabled={myIsStreaming} >
-            {myIsStreaming ? '스트리밍 중...' : 'My Stream 전송'}
-          </button>
-          <p>
-              수신된 My Stream: <strong>{myStreamData}</strong>
-          </p>
-          {myError && <p className="error-message">My Stream 에러 발생: {myError.message}</p>}
-        
-        </div>
-        
-      </section>
-      
-      <footer>
-        <p>&copy; 2025 React Learning</p>
-      </footer>
+        <main className="content-area">
+            <header>
+                <h1>Your Smart Agent AI</h1>
+                <h2>다양한 에이전트를 실시간으로 테스트하세요</h2>
+            </header>
+            
+            <div className="chat-container">
+                <div id="chat-messages" className="chat-messages">
+                    {/* greeting, recommendation-cards는 조건부 렌더링 */}
+                    {messages.length === 0 && ( // ✅ messages 상태를 기준으로 조건부 렌더링
+                        <>
+                            <p className="greeting">
+                                현재 선택된 에이전트: <strong id="current-agent-name">{activeAgent.name}</strong>
+                                <br/>
+                                대화를 시작하거나, 좌측에서 다른 에이전트 모드를 선택해주세요.
+                            </p>
+                            
+                            <div className="recommendation-cards">
+                                <h4>이런 대화를 많이 했어요</h4>
+                                <div className="card-grid">
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                    
+                    {/* 메시지들이 여기에 렌더링될 예정 */}
+                    {messages.map((msg, index) => ( // ✅ messages 상태를 맵핑하여 렌더링
+                      <div 
+                          key={index} 
+                          className={`chat-bubble ${msg.type}-bubble ${msg.isLoading ? 'loading-bubble' : ''} ${msg.isStreaming ? 'loading-bubble' : ''}`}
+                          dangerouslySetInnerHTML={msg.contentType === 'html' ? { __html: msg.content } : undefined}
+                      >
+                          {msg.contentType === 'text' ? msg.content : null}
+                      </div>
+                    ))}
+
+                    {/* 스크롤 위치를 잡아줄 빈 div */}
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Keyword Input Area */}
+                <div 
+                    id="keyword-input-area" 
+                    className={`keyword-input-area ${
+                        activeAgent.name === '네이버뉴스' || activeAgent.name === '뉴스큐레이션' ? '' : 'hidden'
+                    }`}
+                >
+                    <h3>키워드 입력 (최대 3개)</h3>
+                    <div className="keyword-card-grid">
+                        {[0, 1, 2].map(index => (
+                            <div className="keyword-card" key={index}>
+                                <label htmlFor={`keyword${index + 1}`}>키워드 {index + 1}:</label>
+                                <input 
+                                    type="text" 
+                                    id={`keyword${index + 1}`} 
+                                    className="keyword-input" 
+                                    placeholder={index === 0 ? "필수 키워드" : "선택 키워드"}
+                                    value={keywordInputs[index]} 
+                                    onChange={(e) => handleKeywordInputChange(index, e.target.value)} 
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Input Area */}
+                <div className="input-area">
+                    <input 
+                        type="text" 
+                        id="user-input" 
+                        placeholder="필요한 에이전트 작업 요청을 입력하고 엔터를 누르세요..." 
+                        value={chatMessageInput} 
+                        onChange={(e) => setChatMessageInput(e.target.value)} 
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }} 
+                    />
+                    <button id="send-btn" onClick={handleSendMessage} disabled={isStreaming || chatMessageInput.trim() === ''}>
+                        {isStreaming ? '...' : '↑'}
+                    </button>
+                </div>
+            </div>
+        </main>
     </div>
   );
 }
+
 
 export default App;

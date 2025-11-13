@@ -1,4 +1,5 @@
 /* frontend-react/src/App.css */
+/*
 .app-container {
   display: flex;
   flex-direction: column;
@@ -85,7 +86,9 @@ footer {
 }
 
 
-/* 스트리밍 테스트 영역 스타일 */
+
+
+
 .streaming-test-area {
   margin-top: 40px;
   padding: 20px;
@@ -93,8 +96,8 @@ footer {
   border-radius: 8px;
   background-color: #f9f9f9;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  width: 80%; /* 컨테이너 너비 조정 */
-  max-width: 600px; /* 최대 너비 설정 */
+  width: 80%; 
+  max-width: 600px; 
 }
 
 .streaming-test-area h2 {
@@ -105,20 +108,20 @@ footer {
 }
 
 .streaming-test-input-group {
-    display: flex; /* input과 button을 가로로 정렬 */
-    gap: 10px; /* 요소들 간 간격 */
-    margin-bottom: 15px; /* 입력 그룹과 스트림 데이터 간 간격 */
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 15px; 
 }
 
 .streaming-test-area input[type="text"] {
-  flex-grow: 1; /* 입력 필드가 남은 공간을 차지 */
+  flex-grow: 1; 
   padding: 10px 15px;
   border: 1px solid #ddd;
   border-radius: 20px;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s ease;
-  box-sizing: border-box; /* 패딩, 보더가 너비에 포함되도록 */
+  box-sizing: border-box;
 }
 
 .streaming-test-area input[type="text"]:focus {
@@ -135,7 +138,7 @@ footer {
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  flex-shrink: 0; /* 버튼 크기 고정 */
+  flex-shrink: 0; 
 }
 
 .streaming-test-area button:hover:not(:disabled) {
@@ -150,12 +153,12 @@ footer {
 
 .streaming-test-area p {
   margin-top: 15px;
-  background-color: #e6f2d2; /* 연한 녹색 배경 */
+  background-color: #e6f2d2; 
   padding: 10px;
   border-radius: 5px;
   color: #333;
-  word-break: break-all; /* 긴 텍스트 줄바꿈 */
-  text-align: left; /* 텍스트 정렬 */
+  word-break: break-all; 
+  text-align: left;
 }
 
 .streaming-test-area p strong {
@@ -168,3 +171,4 @@ footer {
     background-color: #ffe0e0;
     border: 1px solid #ffaaaa;
 }
+*/
