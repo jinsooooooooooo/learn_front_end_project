@@ -1,12 +1,12 @@
 // frontend-react/src/App.jsx
 import React, { useState, useEffect, useRef } from 'react'; // ✅ useCallback 제거 (단순화)
+import useChatStream from './hooks/useChatStream'; // ✅ GET 방식 스트림 Hook import
 import useChatStreamPost from './hooks/useChatStreamPost'; // ✅ POST 방식 스트림 Hook 임포트
-import AppLayout from './components/Layout/AppLayout'; // ✅ AppLayout 컴포넌트 임포트
 // import './App.css'; // Global.css를 사용한다고 가정 (App.css는 비워둠)
 
 
 // 헬퍼 함수 정의 (컴포넌트 바깥에서 선언)
-// 1) 뉴스 응답 HTML을 생성하는 함수 (DOM 조작 대신 HTML 문자열 반환)
+// 뉴스 응답 HTML을 생성하는 함수 (DOM 조작 대신 HTML 문자열 반환)
 function createNewsHtml(data) {
   if (!data.articles || data.articles.length === 0) {
     return `검색된 뉴스 기사가 없습니다.`;
@@ -24,13 +24,11 @@ function createNewsHtml(data) {
   return newsHtml;
 }
 
-// 2) 일반 텍스트 응답을 반환하는 함수
+
+// 일반 텍스트 응답을 반환하는 함수
 function createChatText(data) {
   return data.reply || data.response || "응답이 없습니다.";
 }
-
-
-
 
 
 function App() {
@@ -235,141 +233,121 @@ function App() {
   };
 
 
-  // 5. JSX 렌더링 - singlie 버전
-  // return (
-  //   <div className="app-container">
-  //       <aside className="sidebar">
-  //           <div className="logo">AI CHAT PROFESSIONAL</div>
-  //           <nav className="agent-menu">
-  //               <h3>Agent 모드 선택</h3>
-  //               <ul id="agent-list">
-  //                   {agents.map((agent, index) => (
-  //                       <li 
-  //                           key={index} 
-  //                           className={`agent-item ${agent.name === activeAgent.name ? 'active' : ''}`}
-  //                           onClick={() => handleAgentChange(agent)} 
-  //                       >
-  //                           <span style={{color: '#6c7081', fontWeight: 500, marginRight: '5px'}}>{agent.mode}</span>
-  //                           {agent.name}
-  //                       </li>
-  //                   ))}
-  //               </ul>
-  //           </nav>
-            
-  //           <div className="user-profile">
-  //               <div className="avatar">임</div>
-  //               <div className="user-info">
-  //                   <strong>{userId}</strong><br/>
-  //               </div>
-  //           </div>
-  //       </aside>
-
-  //       <main className="content-area">
-  //           <header>
-  //               <h1>Your Smart Agent AI</h1>
-  //               <h2>다양한 에이전트를 실시간으로 테스트하세요</h2>
-  //           </header>
-            
-  //           <div className="chat-container">
-  //               <div id="chat-messages" className="chat-messages">
-  //                   {/* greeting, recommendation-cards는 조건부 렌더링 */}
-  //                   {messages.length === 0 && ( // messages 상태를 기준으로 조건부 렌더링
-  //                       <>
-  //                           <p className="greeting">
-  //                               현재 선택된 에이전트: <strong id="current-agent-name">{activeAgent.name}</strong>
-  //                               <br/>
-  //                               대화를 시작하거나, 좌측에서 다른 에이전트 모드를 선택해주세요.
-  //                           </p>
-                            
-  //                           <div className="recommendation-cards">
-  //                               <h4>이런 대화를 많이 했어요</h4>
-  //                               <div className="card-grid">
-  //                                   <div className="card">추천</div>
-  //                                   <div className="card">추천</div>
-  //                                   <div className="card">추천</div>
-  //                                   <div className="card">추천</div>
-  //                               </div>
-  //                           </div>
-  //                       </>
-  //                   )}
-                    
-  //                   {/* 메시지들이 여기에 렌더링될 예정 */}
-  //                   {messages.map((msg, index) => ( // ✅ messages 상태를 맵핑하여 렌더링
-  //                     <div 
-  //                         key={index} 
-  //                         className={`chat-bubble ${msg.type}-bubble ${msg.isLoading ? 'loading-bubble' : ''} ${msg.isStreaming ? 'loading-bubble' : ''}`}
-  //                         dangerouslySetInnerHTML={msg.contentType === 'html' ? { __html: msg.content } : undefined}
-  //                     >
-  //                         {msg.contentType === 'text' ? msg.content : null}
-  //                     </div>
-  //                   ))}
-
-  //                   {/* 스크롤 위치를 잡아줄 빈 div */}
-  //                   <div ref={messagesEndRef} />
-  //               </div>
-
-  //               {/* Keyword Input Area */}
-  //               <div 
-  //                   id="keyword-input-area" 
-  //                   className={`keyword-input-area ${
-  //                       activeAgent.name === '네이버뉴스' || activeAgent.name === '뉴스큐레이션' ? '' : 'hidden'
-  //                   }`}
-  //               >
-  //                   <h3>키워드 입력 (최대 3개)</h3>
-  //                   <div className="keyword-card-grid">
-  //                       {[0, 1, 2].map(index => (
-  //                           <div className="keyword-card" key={index}>
-  //                               <label htmlFor={`keyword${index + 1}`}>키워드 {index + 1}:</label>
-  //                               <input 
-  //                                   type="text" 
-  //                                   id={`keyword${index + 1}`} 
-  //                                   className="keyword-input" 
-  //                                   placeholder={index === 0 ? "필수 키워드" : "선택 키워드"}
-  //                                   value={keywordInputs[index]} 
-  //                                   onChange={(e) => handleKeywordInputChange(index, e.target.value)} 
-  //                               />
-  //                           </div>
-  //                       ))}
-  //                   </div>
-  //               </div>
-
-  //               {/* Main Input Area */}
-  //               <div className="input-area">
-  //                   <input 
-  //                       type="text" 
-  //                       id="user-input" 
-  //                       placeholder="필요한 에이전트 작업 요청을 입력하고 엔터를 누르세요..." 
-  //                       value={chatMessageInput} 
-  //                       onChange={(e) => setChatMessageInput(e.target.value)} 
-  //                       onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }} 
-  //                   />
-  //                   <button id="send-btn" onClick={handleSendMessage} disabled={isStreaming || chatMessageInput.trim() === ''}>
-  //                       {isStreaming ? '...' : '↑'}
-  //                   </button>
-  //               </div>
-  //           </div>
-  //       </main>
-  // //   </div>
-  // );
-
-
-  // 5. JSX 렌더링 - component 분리
+  // 5. JSX 렌더링
   return (
-    <AppLayout
-      agents={agents}
-      activeAgent={activeAgent}
-      userId={userId}
-      chatMessageInput={chatMessageInput}
-      setChatMessageInput={setChatMessageInput}
-      keywordInputs={keywordInputs}
-      handleKeywordInputChange={handleKeywordInputChange}
-      messages={messages}
-      messagesEndRef={messagesEndRef}
-      handleAgentChange={handleAgentChange}
-      handleSendMessage={handleSendMessage}
-      isStreaming={isStreaming}
-      // 수 많은 props
-    />
+    <div className="app-container">
+        <aside className="sidebar">
+            <div className="logo">AI CHAT PROFESSIONAL</div>
+            <nav className="agent-menu">
+                <h3>Agent 모드 선택</h3>
+                <ul id="agent-list">
+                    {agents.map((agent, index) => (
+                        <li 
+                            key={index} 
+                            className={`agent-item ${agent.name === activeAgent.name ? 'active' : ''}`}
+                            onClick={() => handleAgentChange(agent)} 
+                        >
+                            <span style={{color: '#6c7081', fontWeight: 500, marginRight: '5px'}}>{agent.mode}</span>
+                            {agent.name}
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+            
+            <div className="user-profile">
+                <div className="avatar">임</div>
+                <div className="user-info">
+                    <strong>{userId}</strong><br/>
+                </div>
+            </div>
+        </aside>
+
+        <main className="content-area">
+            <header>
+                <h1>Your Smart Agent AI</h1>
+                <h2>다양한 에이전트를 실시간으로 테스트하세요</h2>
+            </header>
+            
+            <div className="chat-container">
+                <div id="chat-messages" className="chat-messages">
+                    {/* greeting, recommendation-cards는 조건부 렌더링 */}
+                    {messages.length === 0 && ( // messages 상태를 기준으로 조건부 렌더링
+                        <>
+                            <p className="greeting">
+                                현재 선택된 에이전트: <strong id="current-agent-name">{activeAgent.name}</strong>
+                                <br/>
+                                대화를 시작하거나, 좌측에서 다른 에이전트 모드를 선택해주세요.
+                            </p>
+                            
+                            <div className="recommendation-cards">
+                                <h4>이런 대화를 많이 했어요</h4>
+                                <div className="card-grid">
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                    <div className="card">추천</div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                    
+                    {/* 메시지들이 여기에 렌더링될 예정 */}
+                    {messages.map((msg, index) => ( // ✅ messages 상태를 맵핑하여 렌더링
+                      <div 
+                          key={index} 
+                          className={`chat-bubble ${msg.type}-bubble ${msg.isLoading ? 'loading-bubble' : ''} ${msg.isStreaming ? 'loading-bubble' : ''}`}
+                          dangerouslySetInnerHTML={msg.contentType === 'html' ? { __html: msg.content } : undefined}
+                      >
+                          {msg.contentType === 'text' ? msg.content : null}
+                      </div>
+                    ))}
+
+                    {/* 스크롤 위치를 잡아줄 빈 div */}
+                    <div ref={messagesEndRef} />
+                </div>
+
+                {/* Keyword Input Area */}
+                <div 
+                    id="keyword-input-area" 
+                    className={`keyword-input-area ${
+                        activeAgent.name === '네이버뉴스' || activeAgent.name === '뉴스큐레이션' ? '' : 'hidden'
+                    }`}
+                >
+                    <h3>키워드 입력 (최대 3개)</h3>
+                    <div className="keyword-card-grid">
+                        {[0, 1, 2].map(index => (
+                            <div className="keyword-card" key={index}>
+                                <label htmlFor={`keyword${index + 1}`}>키워드 {index + 1}:</label>
+                                <input 
+                                    type="text" 
+                                    id={`keyword${index + 1}`} 
+                                    className="keyword-input" 
+                                    placeholder={index === 0 ? "필수 키워드" : "선택 키워드"}
+                                    value={keywordInputs[index]} 
+                                    onChange={(e) => handleKeywordInputChange(index, e.target.value)} 
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Input Area */}
+                <div className="input-area">
+                    <input 
+                        type="text" 
+                        id="user-input" 
+                        placeholder="필요한 에이전트 작업 요청을 입력하고 엔터를 누르세요..." 
+                        value={chatMessageInput} 
+                        onChange={(e) => setChatMessageInput(e.target.value)} 
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }} 
+                    />
+                    <button id="send-btn" onClick={handleSendMessage} disabled={isStreaming || chatMessageInput.trim() === ''}>
+                        {isStreaming ? '...' : '↑'}
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
   );
 }
 

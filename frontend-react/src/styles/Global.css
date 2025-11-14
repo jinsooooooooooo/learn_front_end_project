@@ -438,3 +438,29 @@ body {
 .hidden {
     display: none !important;
 }
+
+
+/* ... (기존 스타일 하단에 추가) ... */
+
+/* 로딩 버블 컨테이너 스타일 */
+.loading-bubble .loading-content {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 스피너와 텍스트 간 간격 */
+}
+
+/* 로딩 스피너 애니메이션 */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #a4c639; /* 포인트 색상 */
+  border-radius: 50%;
+  animation: spin 1s linear infinite; /* 1초마다 한 바퀴 회전 */
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

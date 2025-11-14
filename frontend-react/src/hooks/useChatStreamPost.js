@@ -19,12 +19,17 @@ function useChatStreamPost() { // ✅ API URL 등은 startStreamAction에서 직
     if (abortControllerRef.current) {
         abortControllerRef.current.abort();
     }
+
     abortControllerRef.current = new AbortController(); // 새 AbortController 생성
     const signal = abortControllerRef.current.signal;
 
     setError(null);
     setStreamData('');
     setIsStreaming(true);
+
+    // ✅ 모든 모드에서 로딩 메시지를 먼저 추가하는 것으로 통일
+    const loadingMessage = { type: 'agent', contentType: 'text', content: '...생각 중...', isLoading: true };
+    setMessages(prevMessages => [...prevMessages, loadingMessage]);
 
     try {
       // ✅ POST 요청으로 변경
