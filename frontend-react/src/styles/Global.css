@@ -118,20 +118,20 @@ body {
     display: flex;
     flex-direction: column;
     background-color: #fff;
-    padding: 20px;
+    padding: 5px;
 }
 
 .content-area header {
     text-align: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    margin-bottom: 5px;
+    padding-bottom: 3px;
     border-bottom: 1px solid #eee;
 }
 
 .content-area header h1 {
     font-size: 2rem;
     color: #333;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
 
 .content-area header h2 {
