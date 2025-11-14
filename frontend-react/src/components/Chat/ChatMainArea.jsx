@@ -15,6 +15,7 @@ function ChatMainArea(props) {
           messages={props.messages}
           activeAgent={props.activeAgent}
           messagesEndRef={props.messagesEndRef}
+          handleRecommendationClick={props.handleRecommendationClick}
         />
         <KeywordInputArea 
           activeAgent={props.activeAgent}

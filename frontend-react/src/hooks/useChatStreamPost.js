@@ -27,10 +27,6 @@ function useChatStreamPost() { // ✅ API URL 등은 startStreamAction에서 직
     setStreamData('');
     setIsStreaming(true);
 
-    // ✅ 모든 모드에서 로딩 메시지를 먼저 추가하는 것으로 통일
-    const loadingMessage = { type: 'agent', contentType: 'text', content: '...생각 중...', isLoading: true };
-    setMessages(prevMessages => [...prevMessages, loadingMessage]);
-
     try {
       // ✅ POST 요청으로 변경
       const res = await fetch(apiUrl, {

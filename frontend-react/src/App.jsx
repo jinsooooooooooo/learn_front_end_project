@@ -36,13 +36,27 @@ function createChatText(data) {
 function App() {
   // 1. 상태 정의 -----------------------------------------------------------------
   const [agents, setAgents] = useState([
-    { name: '채팅', apiPath: '/api/chat', mode: 'Chat', messages: [] },
-    { name: '회의실', apiPath: '/api/meeting', mode: 'Chat', messages: [] },
-    { name: '네이버뉴스', apiPath: '/api/naver_news', mode: 'Chat', messages: [] },
-    { name: '뉴스큐레이션', apiPath: '/api/news', mode: 'Chat', messages: [] },
-    { name: 'Langchain채팅', apiPath: '/api/langchain/chat', mode: 'Chat', messages: [] },
-    { name: 'StreamResponse', apiPath: '/api/stream', mode: 'Stream', method: 'POST', messages: [] },
-    { name: 'LangchainStream', apiPath: '/api/langchain/chatstream', method: 'POST', mode: 'Stream', messages: [] }
+    { name: '채팅', apiPath: '/api/chat', mode: 'Chat', messages: [], 
+      recommendations: ['오늘 날씨 알려줘', '요즘 인기 있는 영화 추천해줘', '재미있는 농담 해봐','추천']
+    },
+    { name: '회의실', apiPath: '/api/meeting', mode: 'Chat', messages: [], 
+      recommendations: ['다음 주 월요일 10시 회의실 예약해줘', '가장 가까운 빈 회의실 찾아줘','추천']
+    },
+    { name: '네이버뉴스', apiPath: '/api/naver_news', mode: 'Chat', messages: [],
+      recommendations: ['최신 AI 기술','IT','취업시장','채용','추천']
+     },
+    { name: '뉴스큐레이션', apiPath: '/api/news', mode: 'Chat', messages: [],
+      recommendations: ['AI 관련 뉴스 3개', '경제 동향 요약','추천','추천','추천']
+     },
+    { name: 'Langchain채팅', apiPath: '/api/langchain/chat', mode: 'Chat', messages: [], 
+      recommendations: ['안녕 오늘 날씨 어때?', 'LangChain이 뭐야?', 'React에 대해 설명해줘','추천']
+    },
+    { name: 'StreamResponse', apiPath: '/api/stream', mode: 'Stream', method: 'POST', messages: [] , 
+      recommendations: ['스트림', 'Event Stream', '1장,2장,3장','추천','추천']
+    },
+    { name: 'LangchainStream', apiPath: '/api/langchain/chatstream', method: 'POST', mode: 'Stream', messages: [],
+      recommendations: ['내 이름은 곽준빈이야', '내 이름은?','내 이름은 jin이야','여기는 어디?']
+     }
     // ✅ 나중에 여기에 새로운 Stream 에이전트 추가 가능
   ]);
   const [activeAgent, setActiveAgent] = useState(agents[0]); // 현재 활성 에이전트
@@ -234,6 +248,12 @@ function App() {
     });
   };
 
+  // 4.4 추천카드 이벤트 핸들러 
+  const handleRecommendationClick = (recommendationText) => {
+    setChatMessageInput(recommendationText);
+    handleSendMessage(recommendationText);
+  };
+
 
   // 5. JSX 렌더링 - singlie 버전
   // return (
@@ -368,6 +388,7 @@ function App() {
       handleAgentChange={handleAgentChange}
       handleSendMessage={handleSendMessage}
       isStreaming={isStreaming}
+      handleRecommendationClick={handleRecommendationClick} 
       // 수 많은 props
     />
   );

@@ -1,7 +1,7 @@
 // frontend-react/src/components/Chat/ChatMessageList.jsx
 import React from 'react';
 
-function ChatMessageList({ messages, activeAgent, messagesEndRef }) {
+function ChatMessageList({ messages, activeAgent, messagesEndRef, handleRecommendationClick }) {
   return (
     <div id="chat-messages" className="chat-messages">
       {messages.length === 0 && (
@@ -13,10 +13,15 @@ function ChatMessageList({ messages, activeAgent, messagesEndRef }) {
           <div className="recommendation-cards">
             <h4>이런 대화를 많이 했어요</h4>
             <div className="card-grid">
-              <div className="card">추천</div>
-              <div className="card">추천</div>
-              <div className="card">추천</div>
-              <div className="card">추천</div>
+              {activeAgent.recommendations &&
+                activeAgent.recommendations.map((text, index) => (
+                  <div key={index}
+                    className="card"
+                    onClick={() => handleRecommendationClick(text)}
+                  >
+                    {text}
+                  </div>
+               ))}    
             </div>
           </div>
         </>
@@ -31,7 +36,7 @@ function ChatMessageList({ messages, activeAgent, messagesEndRef }) {
             {/* ✅ msg.contentType이 'text'일 때만 자식 요소를 렌더링 */}
             {msg.contentType === 'text' && (
               // ✅ isLoading일 때 로딩 스피너와 텍스트를 함께 표시
-              msg.isLoading || msg.isStreaming ? (
+              msg.isLoading ? (
                 <div className="loading-content">
                   <div className="spinner"></div>
                   <span>{msg.content}</span>

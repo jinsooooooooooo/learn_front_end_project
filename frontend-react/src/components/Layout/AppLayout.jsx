@@ -23,6 +23,7 @@ function AppLayout(props) {
         messagesEndRef={props.messagesEndRef}
         handleSendMessage={props.handleSendMessage}
         isStreaming={props.isStreaming}
+        handleRecommendationClick={props.handleRecommendationClick}
       />
     </div>
   );
