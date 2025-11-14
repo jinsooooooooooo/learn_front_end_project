@@ -1,17 +1,17 @@
 // frontend-react/src/hooks/useChatStream.js
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// useChatStream 커스텀 Hook 정의 (apiUrl을 startStreamAction에서 받도록 변경)
-function useChatStream(userId, keywords = []) { // ✅ apiUrl은 props로 받지 않음
+// useChatStream 커스텀 Hook 정의 (onClick 직접 호출 버전)
+function useChatStream(apiUrl, userId, keywords = []) { // ✅ message와 trigger는 props로 받지 않음
   const [streamData, setStreamData] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
-  const eventSourceRef = useRef(null);
+  const eventSourceRef = useRef(null); // EventSource 객체를 저장할 ref
 
-  // ✅ 스트림을 시작하는 함수: apiUrl을 첫 번째 인자로 받음
-  const startStreamAction = useCallback(async (apiUrl, messageToStream) => {
-    if (!apiUrl || !messageToStream || isStreaming) {
-      console.warn("useChatStream: apiUrl, 메시지가 없거나 이미 스트리밍 중이므로 새 스트림을 시작하지 않습니다.");
+  // ✅ 스트림을 시작하는 함수를 Hook이 반환하도록 합니다.
+  const startStreamAction = useCallback(async (messageToStream) => { // ✅ 메시지를 인자로 받음
+    if (!messageToStream || isStreaming) {
+      console.warn("useChatStream: 메시지가 없거나 이미 스트리밍 중이므로 새 스트림을 시작하지 않습니다.");
       return;
     }
 
@@ -57,9 +57,9 @@ function useChatStream(userId, keywords = []) { // ✅ apiUrl은 props로 받지
         setError(e);
         setIsStreaming(false);
     }
-  }, [userId, keywords, isStreaming]); // ✅ apiUrl은 의존성에서 제거
+  }, [apiUrl, userId, keywords, isStreaming]);
 
-  // useEffect는 컴포넌트 언마운트 시에만 정리 역할을 합니다.
+  // ✅ useEffect는 컴포넌트 언마운트 시에만 정리 역할을 합니다.
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
@@ -68,8 +68,9 @@ function useChatStream(userId, keywords = []) { // ✅ apiUrl은 props로 받지
         eventSourceRef.current = null;
       }
     };
-  }, []); // 빈 의존성 배열
+  }, []); // ✅ 빈 의존성 배열
 
+  // ✅ Hook이 반환하는 값들 (스트림 시작 함수 포함)
   return { streamData, isStreaming, error, startStreamAction };
 }
 
