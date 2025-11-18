@@ -1,8 +1,15 @@
 // frontend-react/src/components/Inputs/ChatInputArea.jsx
 
 import React from 'react';
+// 1. useChat 훅을 import 합니다.
+import { useChat } from '../../contexts/ChatContext';
 
-function ChatInputArea({ chatMessageInput, setChatMessageInput, handleSendMessage, isStreaming }) {
+// 2. props를 받지 않도록 수정합니다.
+function ChatInputArea() {
+//function ChatInputArea({ chatMessageInput, setChatMessageInput, handleSendMessage, isStreaming }) {
+  // 3. useChat() 훅을 사용하여 필요한 값들을 직접 가져옵니다.
+  const { chatMessageInput, setChatMessageInput, handleSendMessage, isStreaming } = useChat();
+
   return (
     <div className="input-area">
         <input 

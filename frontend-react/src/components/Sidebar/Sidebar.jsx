@@ -3,16 +3,14 @@ import React from 'react';
 import AgentMenu from './AgentMenu';
 import UserProfile from './UserProfile';
 
-function Sidebar({ agents, activeAgent, userId, handleAgentChange }) {
+// 1. Sidebar 컴포넌트에서 모든 props를 제거합니다.
+function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="logo">AI CHAT PROFESSIONAL</div>
-      <AgentMenu 
-        agents={agents}
-        activeAgent={activeAgent}
-        handleAgentChange={handleAgentChange}
-      />
-      <UserProfile userId={userId} />
+      {/* 2. AgentMenu와 UserProfile에 더 이상 props를 전달하지 않습니다. */}
+      <AgentMenu />
+      <UserProfile />
     </aside>
   );
 }

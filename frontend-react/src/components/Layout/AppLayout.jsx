@@ -3,28 +3,15 @@ import React from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import ChatMainArea from '../Chat/ChatMainArea';
 
-function AppLayout(props) {
+// 1. AppLayout 컴포넌트에서 props를 더 이상 받지 않습니다.
+//    이제 이 컴포넌트의 역할은 오직 레이아웃 구조를 잡는 것입니다.
+function AppLayout() {
   return (
     <div className="app-container">
-      <Sidebar 
-        agents={props.agents}
-        activeAgent={props.activeAgent}
-        userId={props.userId}
-        handleAgentChange={props.handleAgentChange}
-      />
-      <ChatMainArea 
-        activeAgent={props.activeAgent}
-        userId={props.userId}
-        chatMessageInput={props.chatMessageInput}
-        setChatMessageInput={props.setChatMessageInput}
-        keywordInputs={props.keywordInputs}
-        handleKeywordInputChange={props.handleKeywordInputChange}
-        messages={props.messages}
-        messagesEndRef={props.messagesEndRef}
-        handleSendMessage={props.handleSendMessage}
-        isStreaming={props.isStreaming}
-        handleRecommendationClick={props.handleRecommendationClick}
-      />
+      {/* 2. Sidebar와 ChatMainArea에 불필요한 props를 전달하지 않습니다. */}
+      {/*    이 컴포넌트들은 이제 직접 Context에서 데이터를 가져올 것입니다. */}
+      <Sidebar />
+      <ChatMainArea />
     </div>
   );
 }

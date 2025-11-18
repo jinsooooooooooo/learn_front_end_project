@@ -1,7 +1,14 @@
 // frontend-react/src/components/Inputs/KeywordInputArea.jsx
 import React from 'react';
+// 1. useChat 훅을 import 합니다.
+import { useChat } from '../../contexts/ChatContext';
 
-function KeywordInputArea({ activeAgent, keywordInputs, handleKeywordInputChange }) {
+// 2. props를 받지 않도록 수정합니다.
+//function KeywordInputArea({ activeAgent, keywordInputs, handleKeywordInputChange }) {
+function KeywordInputArea() {
+  // 3. useChat() 훅을 사용하여 필요한 값들을 직접 가져옵니다.
+  const { activeAgent, keywordInputs, handleKeywordInputChange } = useChat();
+   
   return (
     <div 
         id="keyword-input-area" 
